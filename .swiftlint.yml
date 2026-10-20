@@ -1,0 +1,10 @@
+excluded:
+  - .build
+  - build
+disabled_rules:
+  # Trailing commas keep multi-line literal diffs to one line.
+  - trailing_comma
+identifier_name:
+  excluded: [dx, dy, id]
+line_length:
+  warning: 130

@@ -1,0 +1,18 @@
+<Bindings>
+	<!-- Hidden: the addon binds these to the helper's signal keys itself (see TrackpadTurn.lua). -->
+	<Binding name="TRACKPADTURN_SWIPE" runOnUp="true" hidden="true">
+		TrackpadTurn.OnSwipeKey(keystate)
+	</Binding>
+	<Binding name="TRACKPADTURN_ZOOMIN" hidden="true">
+		TrackpadTurn.OnZoomKey(1)
+	</Binding>
+	<Binding name="TRACKPADTURN_ZOOMOUT" hidden="true">
+		TrackpadTurn.OnZoomKey(-1)
+	</Binding>
+	<Binding name="TRACKPADTURN_WHEELUP" hidden="true">
+		TrackpadTurn.OnWheel(1)
+	</Binding>
+	<Binding name="TRACKPADTURN_WHEELDOWN" hidden="true">
+		TrackpadTurn.OnWheel(-1)
+	</Binding>
+</Bindings>
