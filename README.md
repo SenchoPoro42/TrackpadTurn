@@ -51,7 +51,7 @@ That's all. Each app update also updates the addon copies it installed; type `/r
 
 - **macOS:** 14 Sonoma or newer, on Apple Silicon and Intel.
 - **Tested:** WoW Classic Era 1.15.9 with a Magic Trackpad.
-- **Should work, untested:** Retail, Anniversary and Mists Classic. The addon uses only APIs that every current client has. Reports are welcome.
+- **Should work, untested:** WoW Forever 1.60.1, Retail, Anniversary and Mists Classic. The addon uses only APIs that every current client has, and its TOC lists each client's Interface number. Reports are welcome.
 
 ## Known limits
 

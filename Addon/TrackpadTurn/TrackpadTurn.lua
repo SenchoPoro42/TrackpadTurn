@@ -173,9 +173,14 @@ function TrackpadTurn.OnZoomKey(direction)
 	end
 end
 
--- Stands in for the default CAMERAZOOMIN/OUT wheel binding. A two-finger swipe also sends
--- wheel ticks; they must never zoom (pinch zooms instead), not even the ones that trail the
--- release. Frames that scroll (chat, quest log) get the wheel before bindings, so they still scroll.
+local ZOOM_BINDINGS = { [1] = "CAMERAZOOMIN", [-1] = "CAMERAZOOMOUT" }
+
+-- Stands in for the default CAMERAZOOMIN/OUT wheel binding. Ticks that belong to a two-finger
+-- swipe must never zoom (pinch zooms instead), not even the ones that trail the release.
+-- Frames that scroll (chat, quest log) get the wheel before bindings, so they still scroll.
+--
+-- It zooms with CameraZoomIn/Out itself rather than RunBinding: Retail-engine clients (Forever)
+-- zoom with MoveViewInStart, which addon code may not reach, and the game blocks the call.
 function TrackpadTurn.OnWheel(direction)
 	if swipe.isDown then
 		return
@@ -220,8 +225,8 @@ end
 -- Only take over the plain wheel while it still does the default camera zoom.
 local function WheelState()
 	return {
-		up = GetBindingAction("MOUSEWHEELUP") == "CAMERAZOOMIN",
-		down = GetBindingAction("MOUSEWHEELDOWN") == "CAMERAZOOMOUT",
+		up = GetBindingAction("MOUSEWHEELUP") == ZOOM_BINDINGS[1],
+		down = GetBindingAction("MOUSEWHEELDOWN") == ZOOM_BINDINGS[-1],
 	}
 end
 
@@ -285,10 +290,15 @@ end
 
 -- Events ----------------------------------------------------------------------
 
+-- The game's own "blocked" popup does not say which call it blocked; name it once per call.
+local reportedBlockedCalls = {}
+
 bindingOwner:RegisterEvent("ADDON_LOADED")
 bindingOwner:RegisterEvent("PLAYER_LOGIN")
 bindingOwner:RegisterEvent("UPDATE_BINDINGS")
 bindingOwner:RegisterEvent("PLAYER_REGEN_ENABLED")
+bindingOwner:RegisterEvent("ADDON_ACTION_FORBIDDEN")
+bindingOwner:RegisterEvent("ADDON_ACTION_BLOCKED")
 bindingOwner:SetScript("OnEvent", function(_, event, ...)
 	if event == "ADDON_LOADED" then
 		if ... == ADDON_NAME then
@@ -310,6 +320,13 @@ bindingOwner:SetScript("OnEvent", function(_, event, ...)
 	elseif event == "PLAYER_REGEN_ENABLED" then
 		if applyPendingAfterCombat then
 			ApplyBindings()
+		end
+	elseif event == "ADDON_ACTION_FORBIDDEN" or event == "ADDON_ACTION_BLOCKED" then
+		local addonName, blockedCall = ...
+		if addonName == ADDON_NAME and not reportedBlockedCalls[tostring(blockedCall)] then
+			reportedBlockedCalls[tostring(blockedCall)] = true
+			Print(("the game blocked TrackpadTurn from calling %s. Please report this, it is a bug."):format(
+				tostring(blockedCall)))
 		end
 	end
 end)

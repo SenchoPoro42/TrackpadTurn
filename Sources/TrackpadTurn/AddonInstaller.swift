@@ -23,6 +23,7 @@ final class AddonInstaller {
                 "_classic_": "Classic",
                 "_classic_era_": "Classic Era",
                 "_anniversary_": "Anniversary",
+                "_forever_": "Forever",
                 "_ptr_": "Retail PTR",
                 "_xptr_": "Retail Beta",
                 "_beta_": "Beta",
