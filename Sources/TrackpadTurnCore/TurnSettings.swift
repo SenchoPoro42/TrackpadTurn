@@ -10,6 +10,8 @@ public struct TurnSettings: Codable, Equatable, Sendable {
     public var pinchZoomEnabled = true
     /// Multiplies how many zoom steps one pinch produces.
     public var zoomSpeed = 1.0
+    /// Holding a two-finger press runs forward, like holding both mouse buttons.
+    public var pressToRunEnabled = true
 
     /// Roblox damps pitch against yaw by this ratio; it keeps a mostly-sideways swipe level.
     public static let tiltDamping = 0.77
@@ -30,5 +32,7 @@ public struct TurnSettings: Codable, Equatable, Sendable {
         reverseVertical = try container.decodeIfPresent(Bool.self, forKey: .reverseVertical) ?? defaults.reverseVertical
         pinchZoomEnabled = try container.decodeIfPresent(Bool.self, forKey: .pinchZoomEnabled) ?? defaults.pinchZoomEnabled
         zoomSpeed = try container.decodeIfPresent(Double.self, forKey: .zoomSpeed) ?? defaults.zoomSpeed
+        pressToRunEnabled = try container.decodeIfPresent(Bool.self, forKey: .pressToRunEnabled)
+            ?? defaults.pressToRunEnabled
     }
 }

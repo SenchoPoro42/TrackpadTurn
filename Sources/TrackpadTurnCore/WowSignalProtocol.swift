@@ -7,7 +7,7 @@
 /// BREADCRUMB: the addon binds these exact keys in `Addon/TrackpadTurn/TrackpadTurn.lua`
 /// (`SIGNAL_KEYS`). Change both sides together and bump `version`.
 public enum WowSignalProtocol {
-    public static let version = 1
+    public static let version = 2
 
     public enum SignalKey: CaseIterable, Sendable {
         /// Held down for the whole two-finger swipe. Down = swipe began, up = fingers lifted.
@@ -16,13 +16,17 @@ public enum WowSignalProtocol {
         case zoomIn
         /// Tapped once per pinch-in step.
         case zoomOut
+        /// Held while a two-finger press is held. The addon binds it to run-while-held or to
+        /// toggle autorun (WoW: Settings → AddOns → TrackpadTurn).
+        case forward
 
-        /// macOS virtual key code (`kVK_F19`, `kVK_F17`, `kVK_F18`).
+        /// macOS virtual key code (`kVK_F19`, `kVK_F17`, `kVK_F18`, `kVK_F16`).
         public var virtualKeyCode: UInt16 {
             switch self {
             case .swipe: 80
             case .zoomIn: 64
             case .zoomOut: 79
+            case .forward: 106
             }
         }
 
@@ -32,6 +36,7 @@ public enum WowSignalProtocol {
             case .swipe: "F19"
             case .zoomIn: "F17"
             case .zoomOut: "F18"
+            case .forward: "F16"
             }
         }
     }

@@ -5,6 +5,7 @@
 - **Swipe to turn.** A two-finger swipe over the world turns your camera and character, like holding the right mouse button. Press W and you run where you look.
 - **Tilt.** Up/down swipes tilt the camera. They are damped (0.77×, as in Roblox), so a sideways swipe stays level.
 - **Pinch** zooms in and out.
+- **Run.** Hold a two-finger click to run forward, like holding both mouse buttons. Swipe while holding to steer. If you prefer, make each hold toggle autorun instead (Settings → AddOns → TrackpadTurn).
 - **Lists still scroll.** Swipes over chat, bags or the quest log scroll them as usual.
 - **No glide.** The camera stops the moment your fingers lift.
 
@@ -26,12 +27,15 @@ That's all. Each app update also updates the addon copies it installed; type `/r
 | Two-finger swipe left/right | Turn camera and character | Nothing |
 | Two-finger swipe up/down | Tilt camera | Scroll the frame |
 | Pinch | Zoom | Zoom |
+| Two-finger click, held | Run forward, or toggle autorun (swipe to steer) | Same |
+| Two-finger click, quick | Right-click (interact, loot) | Right-click |
 
-**Menu bar panel:** turn speed, zoom speed, tilt on/off, pinch on/off, reverse each axis, open at login, and an on/off switch. WoW's own mouse sensitivity settings also scale turning.
+**Menu bar panel:** turn speed, zoom speed, tilt on/off, pinch on/off, hold-to-run on/off, reverse each axis, open at login, and an on/off switch. WoW's own mouse sensitivity settings also scale turning.
 
 **In game:**
 - `/tpt` shows whether signals from the app arrive, and how many swipes turned the camera.
 - `/tpt debug` prints why each swipe turned or was left alone, for example "cursor over ChatFrame1".
+- `/tpt settings` opens the addon's settings (Settings → AddOns → TrackpadTurn). Its one setting: "Two-finger hold toggles autorun".
 
 ## Troubleshooting
 
@@ -42,8 +46,8 @@ That's all. Each app update also updates the addon copies it installed; type `/r
 
 ## Privacy and safety
 
-- **What it sees:** only scroll and pinch events, never your key presses. It makes no network connections and keeps no record of your input.
-- **What it sends:** while WoW is in front, it sends F17–F19 key presses and mouse movement to the game, only for as long as your fingers move.
+- **What it sees:** only scroll, pinch and right-click events, never your key presses. It makes no network connections and keeps no record of your input.
+- **What it sends:** while WoW is in front, it sends F16–F19 key presses and mouse movement to the game, only while you swipe, pinch or hold a two-finger click.
 - **Game rules:** it is one-to-one input remapping, in the same family as BetterTouchTool or Steam Input. One finger gesture becomes one continuous camera motion, with no timers, repeats or automation. Blizzard does not approve third-party tools, so use it at your own risk.
 - **Open source:** the whole app and addon are in this repository, so you can check all of the above yourself.
 
@@ -55,8 +59,10 @@ That's all. Each app update also updates the addon copies it installed; type `/r
 
 ## Known limits
 
-- **F17–F19 are taken.** These are the signal keys. If you bind something to them yourself, the addon's binding wins.
+- **F16–F19 are taken.** These are the signal keys. If you bind something to them yourself, the addon's binding wins.
 - **Custom wheel bindings can fire.** If your plain mouse wheel is bound to something other than camera zoom, swipes may trigger that binding. The same goes for Shift- or Ctrl-wheel bindings when you swipe while holding that modifier.
+- **Holding runs anywhere.** Holding a two-finger click runs you (or toggles autorun) even over a frame. Quick clicks are unaffected.
+- **Press first, then swipe.** macOS reports no click for a press made in the middle of a two-finger scroll, so to run you must press before you start swiping.
 - **No glide in lists.** Chat, the quest log and other lists stop scrolling the moment your fingers lift. The app cannot tell a world swipe from a list swipe, so it drops the glide for both.
 - **Magic Mouse turns too.** It scrolls the same way a trackpad does, so its surface also turns the camera.
 
@@ -72,8 +78,8 @@ The job needs two parts, because neither can do it alone:
 
 | Part | Knows | Does |
 |---|---|---|
-| **TrackpadTurn.app** (menu bar) | What your fingers do | Holds **F19** down for the length of a swipe, taps **F17/F18** while you pinch, and sends mouse movement while you swipe. Drops the trackpad's glide events for WoW. |
-| **TrackpadTurn addon** | What is under the cursor | On F19 over the 3D world it starts mouselook, so the movement turns the camera. Over a frame it does nothing, and the frame scrolls. It ignores wheel zoom during a swipe and for the ticks WoW sends just after the release. |
+| **TrackpadTurn.app** (menu bar) | What your fingers do | Holds **F19** down for the length of a swipe, taps **F17/F18** while you pinch, and holds **F16** while a two-finger click is held. Sends mouse movement while you swipe, and drops the trackpad's glide events for WoW. |
+| **TrackpadTurn addon** | What is under the cursor | On F19 over the 3D world it starts mouselook, so the movement turns the camera. F16 runs Blizzard's own move-forward binding. Over a frame it does nothing, and the frame scrolls. It ignores wheel zoom during a swipe and for the ticks WoW sends just after the release. |
 
 The contract between the two parts is `Sources/TrackpadTurnCore/WowSignalProtocol.swift` ↔ `SIGNAL_KEYS` in `Addon/TrackpadTurn/TrackpadTurn.lua`. Change both together.
 

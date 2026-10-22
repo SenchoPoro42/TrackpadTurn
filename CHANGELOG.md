@@ -2,6 +2,18 @@
 
 One version number covers the app and the addon. It comes from `## Version:` in `Addon/TrackpadTurn/TrackpadTurn.toc`.
 
+## 1.1.0
+
+- **Added: hold a two-finger click to run forward,** like holding both mouse buttons; swiping steers while you hold. It works like this:
+  - A quick two-finger click stays a plain right-click (interact, loot), because running starts only after 0.2 s.
+  - The forward key runs Blizzard's own `MOVEFORWARD` binding; addon code can't start movement itself. (`SetMouselookOverrideBinding` only remaps mouse buttons, so it couldn't be used to restrict running to mouselook.)
+  - Only trackpad clicks count; a mouse's right button keeps its normal right-drag.
+  - Holding over a frame also runs; quick clicks never do.
+  - The press must start the gesture: macOS reports no click for a press made in the middle of a two-finger scroll.
+- **Added:** an in-game setting, Settings → AddOns → TrackpadTurn → "Two-finger hold toggles autorun". When it's on, each held two-finger click turns autorun on or off (Blizzard's `TOGGLEAUTORUN`) instead of running while held. `/tpt settings` opens it. If you change it during combat, it applies when combat ends.
+- **Added:** a menu bar toggle that switches the two-finger hold on or off ("Hold a two-finger click to run").
+- **Changed:** the signal protocol is now version 2, with the new F16 forward key.
+
 ## 1.0.3
 
 - **Fixed:** in WoW Forever, a "blocked from an action only available to the Blizzard UI" popup appeared now and then. The cause was 1.0.2's `RunBinding` call. Forever's zoom binding calls `MoveViewInStart`, which addon code may not reach, so the game blocked it. The wheel now zooms with `CameraZoomIn`/`CameraZoomOut` on every client.

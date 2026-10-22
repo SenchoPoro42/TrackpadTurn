@@ -29,7 +29,9 @@ final class EventTap {
         // NSEvent types 29 (gesture) and 30 (magnify) have no CGEventType case; pinches arrive as either.
         let gestureType: UInt64 = 29
         let magnifyType: UInt64 = 30
+        // Right button: a two-finger trackpad press arrives as one (press-to-run).
         let mask: CGEventMask = (1 << CGEventType.scrollWheel.rawValue) | (1 << gestureType) | (1 << magnifyType)
+            | (1 << CGEventType.rightMouseDown.rawValue) | (1 << CGEventType.rightMouseUp.rawValue)
 
         guard let port = CGEvent.tapCreate(
             tap: .cgAnnotatedSessionEventTap,

@@ -59,6 +59,8 @@ struct MenuPanel: View {
             VStack(alignment: .leading, spacing: 6) {
                 Toggle("Tilt camera with up/down swipes", isOn: settings.tiltEnabled)
                 Toggle("Pinch to zoom", isOn: settings.pinchZoomEnabled)
+                Toggle("Hold a two-finger click to run", isOn: settings.pressToRunEnabled)
+                    .help("Run while held, or toggle autorun: choose in WoW under Settings → AddOns → TrackpadTurn.")
                 Toggle("Reverse left/right", isOn: settings.reverseHorizontal)
                 Toggle("Reverse up/down", isOn: settings.reverseVertical)
                     .disabled(!model.settingsStore.settings.tiltEnabled)

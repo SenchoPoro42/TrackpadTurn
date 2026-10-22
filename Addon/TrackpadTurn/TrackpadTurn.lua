@@ -6,18 +6,29 @@
 -- mouselook is on, so this addon decides per swipe: over the 3D world it starts mouselook
 -- (camera and character turn, like holding the right mouse button); over a frame it does
 -- nothing and the frame scrolls as usual.
+-- A held two-finger press reaches WoW as the right button plus the held forward key, which runs
+-- Blizzard's own MOVEFORWARD binding: the same as holding both mouse buttons.
 
 local ADDON_NAME = ...
 
 TrackpadTurn = TrackpadTurn or {}
 local TrackpadTurn = TrackpadTurn
 
-local PROTOCOL_VERSION = 1
+local PROTOCOL_VERSION = 2
 -- Keys nobody presses by hand. Must match WowSignalProtocol.SignalKey.wowKeyName.
 local SIGNAL_KEYS = {
 	TRACKPADTURN_SWIPE = "F19",
 	TRACKPADTURN_ZOOMIN = "F17",
 	TRACKPADTURN_ZOOMOUT = "F18",
+}
+-- Held while a two-finger click is held. It is bound straight to one of Blizzard's own
+-- bindings, chosen in Settings → AddOns: movement is protected, so only the game's secure
+-- bindings may start it. (SetMouselookOverrideBinding would gate it to mouselook, but it only
+-- remaps mouse buttons; a key bound through it does nothing.)
+local HOLD_KEY = "F16"
+local HOLD_BINDINGS = {
+	run = "MOVEFORWARD", -- run while held
+	autorun = "TOGGLEAUTORUN", -- each hold turns autorun on or off
 }
 -- Yards per pinch step. The app's "Zoom speed" slider decides how many steps a pinch makes.
 local ZOOM_YARDS_PER_STEP = 0.5
@@ -238,7 +249,12 @@ local function ApplyBindings()
 	applyPendingAfterCombat = false
 
 	ClearOverrideBindings(bindingOwner)
+	local holdAction = TrackpadTurnDB.holdTogglesAutorun and HOLD_BINDINGS.autorun or HOLD_BINDINGS.run
+	local keyActions = { [HOLD_KEY] = holdAction }
 	for action, key in pairs(SIGNAL_KEYS) do
+		keyActions[key] = action
+	end
+	for key, action in pairs(keyActions) do
 		for _, prefix in ipairs(MODIFIER_PREFIXES) do
 			-- pcall: an unknown chord on some client must not stop the rest from binding.
 			pcall(SetOverrideBinding, bindingOwner, true, prefix .. key, action)
@@ -255,6 +271,33 @@ local function ApplyBindings()
 	appliedWheelState = wheel
 end
 
+-- Settings → AddOns → TrackpadTurn ------------------------------------------
+
+local settingsCategory
+
+-- Follows the pattern in Blizzard_Settings_Shared/Blizzard_ImplementationReadme.lua.
+local function RegisterSettings()
+	if not (Settings and Settings.RegisterVerticalLayoutCategory) then
+		return
+	end
+	settingsCategory = Settings.RegisterVerticalLayoutCategory("TrackpadTurn")
+
+	local holdSetting = Settings.RegisterAddOnSetting(settingsCategory, "TRACKPADTURN_HOLD_TOGGLES_AUTORUN",
+		"holdTogglesAutorun", TrackpadTurnDB, Settings.VarType.Boolean, "Two-finger hold toggles autorun", false)
+	holdSetting:SetValueChangedCallback(function()
+		ApplyBindings()
+		if applyPendingAfterCombat then
+			Print("the new two-finger hold setting applies when combat ends.")
+		end
+	end)
+	Settings.CreateCheckbox(settingsCategory, holdSetting,
+		"Off: you run forward while you hold a two-finger click.\n"
+		.. "On: each held two-finger click turns autorun on or off.\n"
+		.. "Either way, swipe to steer. A quick two-finger click stays a normal right-click.")
+
+	Settings.RegisterAddOnCategory(settingsCategory)
+end
+
 -- Status ----------------------------------------------------------------------
 
 local function PrintStatus()
@@ -267,6 +310,8 @@ local function PrintStatus()
 		Print("no signal from the TrackpadTurn app yet. Is it running, enabled and allowed under "
 			.. "System Settings > Privacy & Security > Accessibility?")
 	end
+	Print("two-finger hold: " .. (TrackpadTurnDB.holdTogglesAutorun and "toggles autorun" or "run while held")
+		.. " (/tpt settings to change).")
 	local wheel = appliedWheelState or WheelState()
 	if not (wheel.up and wheel.down) then
 		Print("your mouse wheel has a custom binding, so swipes may also trigger it.")
@@ -283,6 +328,8 @@ SlashCmdList.TRACKPADTURN = function(input)
 	if command == "debug" then
 		TrackpadTurnDB.debug = not TrackpadTurnDB.debug
 		Print("debug messages " .. (TrackpadTurnDB.debug and "on" or "off") .. ".")
+	elseif command == "settings" and settingsCategory then
+		Settings.OpenToCategory(settingsCategory:GetID())
 	else
 		PrintStatus()
 	end
@@ -303,6 +350,7 @@ bindingOwner:SetScript("OnEvent", function(_, event, ...)
 	if event == "ADDON_LOADED" then
 		if ... == ADDON_NAME then
 			TrackpadTurnDB = TrackpadTurnDB or {}
+			RegisterSettings()
 			bindingOwner:UnregisterEvent("ADDON_LOADED")
 		end
 	elseif event == "PLAYER_LOGIN" then

@@ -43,6 +43,11 @@ final class GestureBridge {
     /// The WoW process holding the swipe key down, so it can be released even after focus moves.
     @ObservationIgnored private var swipeTargetPID: pid_t?
     @ObservationIgnored private var lookEventsThisSwipe = 0
+    @ObservationIgnored private var pressTracker = PressTracker()
+    /// Fires when a held two-finger press has lasted long enough to run.
+    @ObservationIgnored private var pressHoldTask: Task<Void, Never>?
+    /// The WoW process holding the forward key down.
+    @ObservationIgnored private var runTargetPID: pid_t?
 
     init(settingsStore: SettingsStore, wowMonitor: WowAppMonitor) {
         self.settingsStore = settingsStore
@@ -51,10 +56,10 @@ final class GestureBridge {
         access.eventHandler = { [weak self] type, event in
             self?.handle(type: type, event: event) ?? Unmanaged.passUnretained(event)
         }
-        access.onEventsMissed = { [weak self] in self?.abandonSwipe() }
-        wowMonitor.onWowResignedFront = { [weak self] _ in self?.abandonSwipe() }
+        access.onEventsMissed = { [weak self] in self?.abandonGestures() }
+        wowMonitor.onWowResignedFront = { [weak self] _ in self?.abandonGestures() }
         settingsStore.onChange = { [weak self] settings in
-            if !settings.isEnabled { self?.abandonSwipe() }
+            if !settings.isEnabled { self?.abandonGestures() }
         }
     }
 
@@ -63,7 +68,7 @@ final class GestureBridge {
     }
 
     func shutdown() {
-        abandonSwipe()
+        abandonGestures()
         access.stop()
     }
 
@@ -74,9 +79,10 @@ final class GestureBridge {
         guard !InputSynthesizer.isSynthetic(event) else { return passThrough }
 
         let isBoundForWow = isBoundForWow(event)
-        // Once a swipe is open, follow it to its end even if a window appears under the cursor.
+        // Once a swipe or press is open, follow it to its end even if a window appears under the cursor.
         let followsOpenSwipe = type == .scrollWheel && swipeTracker.isTracking
-        guard isBoundForWow || followsOpenSwipe, let nsEvent = NSEvent(cgEvent: event) else {
+        let followsOpenPress = type == .rightMouseUp && pressTracker.isTracking
+        guard isBoundForWow || followsOpenSwipe || followsOpenPress, let nsEvent = NSEvent(cgEvent: event) else {
             if type == .scrollWheel, let wowPID = wowMonitor.frontmostWowPID {
                 let targetPID = event.getIntegerValueField(.eventTargetUnixProcessID)
                 Log.input.debug("scroll passed untouched: targets pid \(targetPID), WoW is \(wowPID)")
@@ -96,6 +102,11 @@ final class GestureBridge {
         case .magnify:
             handlePinch(nsEvent)
             return passThrough
+        case .rightMouseDown:
+            handlePressDown(event)
+            return passThrough
+        case .rightMouseUp:
+            return handlePressUp(event)
         default:
             return passThrough
         }
@@ -157,16 +168,69 @@ final class GestureBridge {
         }
     }
 
-    /// Ends a swipe whose end event will never reach us, so WoW is never left mouselooking.
+    // MARK: Press to run
+
+    /// macOS marks mouse events that a trackpad made with `NSEventSubtypeTouch` (3); a mouse's
+    /// right button never sends it, so a real mouse keeps its plain right-drag.
+    private static let trackpadEventSubtype: Int64 = 3
+
+    private func handlePressDown(_ event: CGEvent) {
+        guard event.getIntegerValueField(.mouseEventSubtype) == Self.trackpadEventSubtype else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        guard let runsAt = pressTracker.pressBegan(at: now, settings: settingsStore.settings) else { return }
+        pressHoldTask?.cancel()
+        pressHoldTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(runsAt - now))
+            guard !Task.isCancelled, let self else { return }
+            // Check at the deadline this task was made for; a newer press has a later one.
+            guard pressTracker.checkHold(at: runsAt).contains(.runBegan) else { return }
+            synthesizer.setKey(.forward, down: true)
+            runTargetPID = wowMonitor.frontmostWowPID
+            Log.input.debug("press held: running forward")
+        }
+    }
+
+    private func handlePressUp(_ event: CGEvent) -> Unmanaged<CGEvent>? {
+        pressHoldTask?.cancel()
+        guard pressTracker.pressEnded().contains(.runEnded) else { return Unmanaged.passUnretained(event) }
+        // Stop running before WoW sees the button release: the release ends mouselook, and the
+        // forward binding only applies while mouselooking.
+        releaseForwardKey()
+        synthesizer.repost(event)
+        return nil
+    }
+
+    private func releaseForwardKey() {
+        synthesizer.setKey(.forward, down: false, deliverTo: deliveryPID(for: runTargetPID))
+        runTargetPID = nil
+        Log.input.debug("press released: stopped running")
+    }
+
+    // MARK: Ending gestures
+
+    /// Ends gestures whose end events will never reach us, so WoW is never left mouselooking
+    /// or running.
+    private func abandonGestures() {
+        abandonSwipe()
+        pressHoldTask?.cancel()
+        if pressTracker.pressEnded().contains(.runEnded) {
+            releaseForwardKey()
+        }
+    }
+
     private func abandonSwipe() {
-        guard swipeTracker.finish().contains(.swipeEnded) else { return }
-        releaseSwipeKey()
+        if swipeTracker.finish().contains(.swipeEnded) {
+            releaseSwipeKey()
+        }
+    }
+
+    /// Post straight to the WoW process when it is no longer the app that receives keys.
+    private func deliveryPID(for targetPID: pid_t?) -> pid_t? {
+        targetPID == wowMonitor.frontmostWowPID ? nil : targetPID
     }
 
     private func releaseSwipeKey() {
-        // Post straight to the WoW process when it is no longer the app that receives keys.
-        let deliverTo = swipeTargetPID == wowMonitor.frontmostWowPID ? nil : swipeTargetPID
-        synthesizer.setKey(.swipe, down: false, deliverTo: deliverTo)
+        synthesizer.setKey(.swipe, down: false, deliverTo: deliveryPID(for: swipeTargetPID))
         swipeTargetPID = nil
         activity.isSwiping = false
         activity.lookEventsInLastSwipe = lookEventsThisSwipe
