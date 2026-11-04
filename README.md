@@ -24,7 +24,7 @@ That's all. Each app update also updates the addon copies it installed; type `/r
 
 Needs Windows 10 or 11 and a **Precision Touchpad** (most laptops since 2016; Settings → Bluetooth & devices → Touchpad says "Your PC has a precision touchpad").
 
-1. **Get the app.** Download `TrackpadTurn.exe` (use the Arm64 build on a Snapdragon laptop) and put it somewhere permanent, such as `Documents`. It is one file; nothing else to install.
+1. **Get the app.** From [Releases](../../releases), download `TrackpadTurn-<version>-windows-x64.exe` (or the `-windows-arm64.exe` on a Snapdragon laptop) and put it somewhere permanent, such as `Documents`. It is one file; nothing else to install. The Windows helper is in beta, so its releases are marked pre-release.
 2. **Run it.** The app isn't code-signed, so Windows SmartScreen shows "Windows protected your PC" the first time. Click **More info → Run anyway**. A hand icon appears in the system tray (click **^** next to the clock if it is hidden), and the settings window opens.
 3. **Install the addon.** Click **Install** next to your game flavor. If WoW isn't in `Program Files`, click **Choose WoW folder…** first. If Windows asks for administrator approval to write to WoW's folder, say yes.
 4. **Restart WoW once,** so it finds the new addon. If WoW lists it as out of date, tick **Load out of date AddOns**.
