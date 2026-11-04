@@ -11,7 +11,7 @@ jobs:
   test:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build
         run: swift build
       - name: Test gesture logic
@@ -22,7 +22,7 @@ jobs:
   addon:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Lua 5.1 (the version WoW runs)
         run: sudo apt-get update -q && sudo apt-get install -yq lua5.1
       - name: Check addon Lua syntax
