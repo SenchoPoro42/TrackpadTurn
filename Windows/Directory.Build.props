@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <!-- Lets the Windows-only app compile on macOS too, for fast local checks. It still only runs on Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Symbols inside the binaries, so a published exe ships alone. -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <!-- One version for helper and addon: `## Version:` in the addon's TOC (see CHANGELOG.md). -->
+  <PropertyGroup>
+    <AddonTocPath>$(MSBuildThisFileDirectory)../Addon/TrackpadTurn/TrackpadTurn.toc</AddonTocPath>
+    <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText('$(AddonTocPath)')), '## Version:\s*([0-9.]+)').Groups[1].Value)</Version>
+  </PropertyGroup>
+</Project>

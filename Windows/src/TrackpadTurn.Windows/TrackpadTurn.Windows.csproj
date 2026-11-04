@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tray app: Raw Input touchpad reader, low-level mouse hook, SendInput, addon installer, settings. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>TrackpadTurn</AssemblyName>
+    <RootNamespace>TrackpadTurn.Windows</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Resources/TrackpadTurn.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Product>TrackpadTurn</Product>
+    <Company>TrackpadTurn</Company>
+    <Description>Two-finger touchpad turning for World of Warcraft</Description>
+  </PropertyGroup>
+
+  <!-- Release: one self-contained exe the friend can double-click (no .NET install needed). -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.367">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../TrackpadTurn.Core/TrackpadTurn.Core.csproj" />
+  </ItemGroup>
+
+  <!-- The addon ships inside the exe, so helper and addon always speak the same protocol version. -->
+  <ItemGroup>
+    <EmbeddedResource Include="../../../Addon/TrackpadTurn/**/*" LogicalName="Addon/TrackpadTurn/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Resources/TrackpadTurn.ico" LogicalName="TrackpadTurn.ico" />
+  </ItemGroup>
+
+</Project>

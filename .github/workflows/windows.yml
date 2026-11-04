@@ -1,0 +1,42 @@
+name: Windows
+
+# Every branch, not just main: the exe artifact is how a Windows tester gets a build.
+# (No pull_request trigger: it would run the same commit twice.)
+on:
+  push:
+    paths: ['Windows/**', 'Addon/**', '.github/workflows/windows.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  helper:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: Windows/global.json
+      - name: Test gesture logic
+        run: dotnet test Windows/TrackpadTurn.Windows.slnx -c Release
+      - name: Build the app (x64 and Arm64)
+        run: |
+          dotnet publish Windows/src/TrackpadTurn.Windows -c Release -r win-x64 -o Windows/artifacts/win-x64
+          dotnet publish Windows/src/TrackpadTurn.Windows -c Release -r win-arm64 -o Windows/artifacts/win-arm64
+      - name: Check the Win32 plumbing (hooks see the app's own marked input)
+        shell: pwsh
+        run: |
+          $result = "$env:RUNNER_TEMP\self-test.txt"
+          $process = Start-Process Windows/artifacts/win-x64/TrackpadTurn.exe -ArgumentList '--self-test', $result -Wait -PassThru
+          Get-Content $result
+          exit $process.ExitCode
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TrackpadTurn-windows-x64
+          path: Windows/artifacts/win-x64/TrackpadTurn.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TrackpadTurn-windows-arm64
+          path: Windows/artifacts/win-arm64/TrackpadTurn.exe

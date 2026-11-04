@@ -2,6 +2,15 @@
 
 One version number covers the app and the addon. It comes from `## Version:` in `Addon/TrackpadTurn/TrackpadTurn.toc`.
 
+## 1.2.0
+
+- **Added: a Windows helper** for laptops with a Precision Touchpad (Windows 10/11, x64 and Arm64): swipe to turn and tilt, pinch to zoom, hold a two-finger click to run, lists still scroll, no glide. It's a tray app with a settings window and an addon installer, shipped as one self-contained exe. It has not been tested in game yet. How it works:
+  - It reads the touchpad's raw finger contacts, because Windows gives games only wheel events, with no begin or end and with glide added after the lift.
+  - It sends mouse movement only while WoW's mouselook hides the cursor; on Windows the movement would otherwise drag the pointer away from a list you scroll.
+  - It does not start with Windows unless you tick **Start at login**.
+- **Changed: the signal protocol is now version 3,** with a key set per platform. WoW on Windows ignores F13–F24, so Windows uses Pause (swipe), Home/End (zoom) and Insert (run): keys that type no text and toggle nothing. The Mac keeps F16–F19.
+- **Changed:** the addon's "no signal" help (`/tpt`) now names the right steps for each platform.
+
 ## 1.1.0
 
 - **Added: hold a two-finger click to run forward,** like holding both mouse buttons; swiping steers while you hold. It works like this:

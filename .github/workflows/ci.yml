@@ -3,7 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ['Windows/**', '.github/workflows/windows.yml']
   pull_request:
+    paths-ignore: ['Windows/**', '.github/workflows/windows.yml']
 
 jobs:
   test:
@@ -16,3 +18,12 @@ jobs:
         run: swift test
       - name: Check addon XML
         run: xmllint --noout Addon/TrackpadTurn/Bindings.xml
+
+  addon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.1 (the version WoW runs)
+        run: sudo apt-get update -q && sudo apt-get install -yq lua5.1
+      - name: Check addon Lua syntax
+        run: luac5.1 -p Addon/TrackpadTurn/*.lua

@@ -2,3 +2,7 @@ build/
 .build/
 .swiftpm/
 .DS_Store
+# .NET (Windows helper)
+Windows/**/bin/
+Windows/**/obj/
+Windows/artifacts/

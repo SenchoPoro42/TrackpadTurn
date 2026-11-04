@@ -5,9 +5,11 @@
 /// cursor is over the 3D world or over a frame) decides what they mean.
 ///
 /// BREADCRUMB: the addon binds these exact keys in `Addon/TrackpadTurn/TrackpadTurn.lua`
-/// (`SIGNAL_KEYS`). Change both sides together and bump `version`.
+/// (`SIGNAL_KEY_SETS.mac`). The Windows helper uses other keys, because WoW on Windows ignores
+/// F13–F24 (`Windows/src/TrackpadTurn.Core/WowSignalProtocol.cs`). Change all sides together
+/// and bump `version`.
 public enum WowSignalProtocol {
-    public static let version = 2
+    public static let version = 3
 
     public enum SignalKey: CaseIterable, Sendable {
         /// Held down for the whole two-finger swipe. Down = swipe began, up = fingers lifted.

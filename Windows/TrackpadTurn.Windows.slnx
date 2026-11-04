@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TrackpadTurn.Core/TrackpadTurn.Core.csproj" />
+    <Project Path="src/TrackpadTurn.Windows/TrackpadTurn.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TrackpadTurn.Core.Tests/TrackpadTurn.Core.Tests.csproj" />
+  </Folder>
+</Solution>

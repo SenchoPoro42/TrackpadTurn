@@ -1,8 +1,9 @@
--- TrackpadTurn: two-finger trackpad turning for World of Warcraft on macOS.
+-- TrackpadTurn: two-finger trackpad turning for World of Warcraft on macOS and Windows.
 --
--- BREADCRUMB: the TrackpadTurn Mac app (Sources/TrackpadTurnCore/WowSignalProtocol.swift)
--- holds the swipe key down for the whole two-finger swipe, taps the zoom keys while you pinch,
--- and posts mouse movement during the swipe. Mouse movement only turns the camera while
+-- BREADCRUMB: the TrackpadTurn helper app (Mac: Sources/TrackpadTurnCore/WowSignalProtocol.swift,
+-- Windows: Windows/src/TrackpadTurn.Core/WowSignalProtocol.cs) holds the swipe key down for the
+-- whole two-finger swipe, taps the zoom keys while you pinch, and sends mouse movement during
+-- the swipe. Mouse movement only turns the camera while
 -- mouselook is on, so this addon decides per swipe: over the 3D world it starts mouselook
 -- (camera and character turn, like holding the right mouse button); over a frame it does
 -- nothing and the frame scrolls as usual.
@@ -14,18 +15,27 @@ local ADDON_NAME = ...
 TrackpadTurn = TrackpadTurn or {}
 local TrackpadTurn = TrackpadTurn
 
-local PROTOCOL_VERSION = 2
--- Keys nobody presses by hand. Must match WowSignalProtocol.SignalKey.wowKeyName.
+local PROTOCOL_VERSION = 3
+local IS_MAC = IsMacClient and IsMacClient() or false
+-- Keys nobody presses by hand, per platform. Must match each helper's WowSignalProtocol.
+-- WoW on Windows ignores F13–F24, so Windows uses keys that type no text (a swipe with chat
+-- open must not write into it), toggle no lock state and trigger no Windows shortcut.
+-- Home/End already zoom the camera in WoW's default bindings.
+local SIGNAL_KEY_SETS = {
+	mac = { swipe = "F19", zoomIn = "F17", zoomOut = "F18", hold = "F16" },
+	windows = { swipe = "PAUSE", zoomIn = "HOME", zoomOut = "END", hold = "INSERT" },
+}
+local PLATFORM_KEYS = IS_MAC and SIGNAL_KEY_SETS.mac or SIGNAL_KEY_SETS.windows
 local SIGNAL_KEYS = {
-	TRACKPADTURN_SWIPE = "F19",
-	TRACKPADTURN_ZOOMIN = "F17",
-	TRACKPADTURN_ZOOMOUT = "F18",
+	TRACKPADTURN_SWIPE = PLATFORM_KEYS.swipe,
+	TRACKPADTURN_ZOOMIN = PLATFORM_KEYS.zoomIn,
+	TRACKPADTURN_ZOOMOUT = PLATFORM_KEYS.zoomOut,
 }
 -- Held while a two-finger click is held. It is bound straight to one of Blizzard's own
 -- bindings, chosen in Settings → AddOns: movement is protected, so only the game's secure
 -- bindings may start it. (SetMouselookOverrideBinding would gate it to mouselook, but it only
 -- remaps mouse buttons; a key bound through it does nothing.)
-local HOLD_KEY = "F16"
+local HOLD_KEY = PLATFORM_KEYS.hold
 local HOLD_BINDINGS = {
 	run = "MOVEFORWARD", -- run while held
 	autorun = "TOGGLEAUTORUN", -- each hold turns autorun on or off
@@ -306,9 +316,12 @@ local function PrintStatus()
 		Print(("last signal %.0fs ago · %d swipes (%d turned) · %d zoom steps · %d wheel ticks ignored after release"):format(
 			GetTime() - stats.lastSignalAt, stats.swipes, stats.turningSwipes, stats.zoomSteps,
 			stats.wheelTicksIgnoredAfterRelease))
-	else
+	elseif IS_MAC then
 		Print("no signal from the TrackpadTurn app yet. Is it running, enabled and allowed under "
 			.. "System Settings > Privacy & Security > Accessibility?")
+	else
+		Print("no signal from the TrackpadTurn app yet. Is it running (tray icon) and enabled? "
+			.. "If WoW runs as administrator, TrackpadTurn must too.")
 	end
 	Print("two-finger hold: " .. (TrackpadTurnDB.holdTogglesAutorun and "toggles autorun" or "run while held")
 		.. " (/tpt settings to change).")
